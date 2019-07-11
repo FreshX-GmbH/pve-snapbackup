@@ -1,0 +1,32 @@
+{
+  "name": "pvesnapbackup",
+  "version": "0.0.1",
+  "description": "Create qemu snapshot based backups of VMs running on Proxmox VE ",
+  "main": "app.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@git.freshx.de:IT-Services/pvesnapbackup.git"
+  },
+  "keywords": [
+    "pve",
+    "rbd",
+    "ceph",
+    "snapshot",
+    "qemu",
+    "proxmox"
+  ],
+  "author": "florian@freshx.de",
+  "license": "ISC",
+  "dependencies": {
+    "events": "^3.0.0",
+    "exec": "^0.2.1",
+    "querystring": "^0.2.0",
+    "winston": "^3.2.1"
+  }
+}
