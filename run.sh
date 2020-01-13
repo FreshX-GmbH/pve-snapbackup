@@ -1,5 +1,5 @@
 #! /bin/bash
-source /usr/local/bin/benji/activate
+source /usr/local/benji/bin/activate
 # virtualenv is now active.
 #
 DATE=$(date +"%Y-%m-%d_%H-%M-%S")
