@@ -3,14 +3,6 @@ stages:
   - build&deploy
   - notify
 
-after_script:
-  - echo "Moving artifacts.."
-  - mv $CI_PROJECT_DIR/artifacts $CI_PROJECT_DIR/../artifacts || echo "No artifact folder available"
-  - echo "Cleaning $CI_PROJECT_DIR"
-  - rm -rf $CI_PROJECT_DIR/*
-  - echo "Moving artifacts.."
-  - mv $CI_PROJECT_DIR/../artifacts $CI_PROJECT_DIR/artifacts || echo "Artifact folder was not moved (not existent)"
-
 test:nodeunit:
   stage: test
   tags:
@@ -33,8 +25,10 @@ test:lint:
 deploy:wallabycd:
   stage: build&deploy
   script:
+    - if [ $(uname) == "Darwin" ]; then export FASTLANE_SESSION=$(cat /Users/freshx/appleDeveloperSession_cd@freshx.de.txt); fi
     - export ANDROID_HOME=/opt/android-sdk-linux
     - node $(dirname $(nvm which current))/../lib/node_modules/wallaby-cd/app.js
+    - node $(dirname $(nvm which current))/../bin/wallaby-simple-cd
   tags: 
     - deploy
 
