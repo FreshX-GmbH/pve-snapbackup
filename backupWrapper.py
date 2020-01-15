@@ -72,7 +72,6 @@ if conf['logLevel'] != 'None':
     logging.debug(f'Setting log level to {conf["logLevel"]}')
     logging.getLogger().setLevel(__logLevel)
 logging.debug(conf)
-sys.exit(0)
 
 # Global dict with nodes and vmids
 toBackupDict = {}
