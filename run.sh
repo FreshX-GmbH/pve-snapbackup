@@ -1,4 +1,7 @@
-#! /bin/bash
+#!/usr/bin/env bash
+# exit on any error
+set -eo pipefail
+
 source /usr/local/benji/bin/activate
 # virtualenv is now active.
 #
