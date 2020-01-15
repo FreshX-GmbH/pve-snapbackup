@@ -5,22 +5,87 @@ import subprocess
 import shlex
 import json
 from datetime import datetime
+import logging
+import yaml
+import sys
+import os
 
-# global stuff
-proxmox = ProxmoxAPI('pve-compute01.freshx.de', user='backup@pve', password='', verify_ssl=False)
-nodeFilter = 'compute'
-vmFilter = 'benjiBackup=true'
+# Config File definition
+configFile = 'settings.yml'
+# default log format + level
+logging.basicConfig(format='%(asctime)s - %(filename)s - %(levelname)s - %(message)s', level=logging.DEBUG)
+logging.info('Starting script execution')
+
+# read config file or die!
+logging.info(f'Reading config file {configFile}')
+if not os.path.exists(configFile):
+    logging.error(f'Config File {configFile} not found. Exiting!')
+    sys.exit(1)
+with open(configFile, 'r') as ymlfile:
+    try:
+        cfg = yaml.load(ymlfile, Loader=yaml.FullLoader)
+        logging.debug(f'Contents of config file {configFile}:')
+        logging.debug(cfg)
+
+    except:
+        logging.warning(f'Failed to load  file {configFile}. Continue with defaults - that will most likely fail!')
+        cfg = {}
+
+# global stuff - populate config dict or die!
+defaults = {
+    'nodeFilter': 'compute', # Filter String for pve hostnames to search for vms to backup
+    'vmFilter': 'benjiBackup=true', # Filter String to search for in VM description to decide if we back up the vm
+    'snapRegex': '^b_', # Snapshot prefix to use - so we do not interfere with other snapshots
+    'snapMaxAge': int(172800), # 48h
+    'logFile': '/var/log/pvesnapbackup', # this is not yet implemented
+    'pve': {
+        'apiEndpoint': 'localhost',
+        'apiUser': 'root@pam',
+        'apiPwd': 'changeMe',
+        'verifySsl': True
+    }
+}
+
+# build configuration from defaults and config file
+def buildConf(cfg):
+    __conf = {
+        'pveApiEndpoint': str(cfg.get('pve', {}).get('apiEndpoint', defaults['pve']['apiEndpoint'])),
+        'pveApiUser': str(cfg.get('pve', {}).get('apiUser', defaults['pve']['apiUser'])),
+        'pveApiPwd': str(cfg.get('pve', {}).get('apiPwd', defaults['pve']['apiPwd'])),
+        'pveVerifySsl': bool(cfg.get('pve', {}).get('verifySsl', defaults['pve']['verifySsl'])),
+        'nodeFilter': str(cfg.get('nodeFilter', defaults['nodeFilter'])),
+        'vmFilter': str(cfg.get('vmFilter', defaults['vmFilter'])),
+        'snapRegex': str(cfg.get('snapRegex', defaults['snapRegex'])),
+        'snapMaxAge': str(cfg.get('snapMaxAge', defaults['snapMaxAge'])),
+        'logFile': str(cfg.get('logFile', defaults['logFile'])),
+        'logLevel': str(cfg.get('logLevel'))
+
+    }
+    return __conf
+
+# build conf dict
+logging.debug(f'Generating config object')
+conf = buildConf(cfg)
+logging.debug(f'Running with the following config: {conf}')
+if conf['logLevel'] != 'None':
+    __logLevel = getattr(logging, conf['logLevel'].upper())
+    logging.debug(f'Setting log level to {conf["logLevel"]}')
+    logging.getLogger().setLevel(__logLevel)
+logging.debug(conf)
+sys.exit(0)
+
+# Global dict with nodes and vmids
 toBackupDict = {}
-snapRegex = "^b_"
-snapMaxAge = int(172800)
 # Track VM Snapshots to prevent unnecessary snapshots
 vmList = []
+# Proxmox API Object
+proxmox = ProxmoxAPI(conf['pveApiEndpoint'], user=conf['pveApiUser'], password=conf['pveApiPwd'], verify_ssl=conf['pveVerifySsl'])
 
 # returns a list of proxmox nodes matching the filterString  
 def getNodeList():
     __nodeList = []
     for node in proxmox.nodes.get():
-        if nodeFilter in node['node']:
+        if conf['nodeFilter'] in node['node']:
             __nodeList.append(node['node'])
     return __nodeList
 
@@ -31,7 +96,7 @@ def getVmList(node):
         __config = proxmox.nodes(node).qemu(vm['vmid']).config.get()
         if 'description' in __config:
             __description = __config['description']
-            if vmFilter in __description:
+            if conf['vmFilter'] in __description:
                 __vmList.append(vm['vmid'])
     return __vmList
 
@@ -42,7 +107,7 @@ def getSnapList(node, vmid):
     # filter out all benji snapshots - we do not touch other snapshots
     __benjiSnapshots = []
     for el in __snapshots: 
-        if re.search(snapRegex, el['name']):
+        if re.search(conf['snapRegex'], el['name']):
             __benjiSnapshots.append(el)
     return __benjiSnapshots
 
@@ -54,7 +119,7 @@ def takeSnapshot(node, vmid):
     __snapPrefix = 'b_'
     __snapTimestamp = __now.strftime("%Y_%m_%d_T%H_%M_%S")
     __snapName = __snapPrefix + __snapTimestamp
-    print('Invoking snapshot for VMID: ', vmid)
+    logging.info(f'Invoking snapshot for VMID: {vmid}')
     proxmox.nodes(node).qemu(vmid).snapshot.create(snapname=__snapName)
     # sleep while waiting for snapshot to complete
     # TODO: error handling when snapshot hangs!!!
@@ -63,9 +128,9 @@ def takeSnapshot(node, vmid):
     while not __exists:
         __loopcount += __loopcount
         if __loopcount > 12:
-            print('Snapshot hanging... Aborting backup!')
+            logging.info('Snapshot hanging... Aborting backup!')
             break
-        print('Waiting for new Snapshot to be completed...')
+        logging.info('Waiting for new Snapshot to be completed...')
         time.sleep(5)
         __snapshots = getSnapList(node, vmid)
         if len(__snapshots) > 0:
@@ -78,7 +143,7 @@ def takeSnapshot(node, vmid):
                             __snap = __snapshots[0]
                         else:
                             sys.exit("Something went wrong while creating a new snapshot")
-                        print('snapshot done: ', __snap)
+                        logging.info(f'snapshot done: {__snap}')
                         return __snap
 
 # takes node, vmid, snapname as arguments, returns Snapshot info dictionary
@@ -88,31 +153,31 @@ def getSnapConfig(node, vmid, snapname):
 
 # takes node, vmid, pve-api snapshot dict as arguments - deletes given snapshot
 def deleteSnapshot(node, vmid, snapshot):
-     print('Deleting Snapshot', snapshot['name'])
+     logging.info(f'Deleting Snapshot {snapshot["name"]}')
      proxmox.nodes(node).qemu(vmid).snapshot(snapshot['name']).delete()
      # wait until the snapshot does not longer appear in snapshot list
      # TODO: maybe introduce max waiting time and panic if deletion lasts longer than e.g. 5 Minutes
      __exists = True
      while __exists: 
-         print('waiting for snapshot to be deleted')
+         logging.info('waiting for snapshot to be deleted')
          time.sleep(10)
          __list = getSnapList(node, vmid)
          if not any(d['name'] == snapshot['name'] for d in __list):
              __exists = False
-             print(f'Snapshot {snapshot["name"]} deleted!')
+             logging.info(f'Snapshot {snapshot["name"]} deleted!')
 
 # Benji Backup Logic - takes rbd disk (e.g. HDD/vm-104-disk-0) and vmid and creates benji backup
 def benjiBackup(disk, lastSnap, vmid):
-    print('backuuuuuupp', disk, lastSnap) 
+    logging.info('Invoking Benji Backup for disk {disk} - snapshot {lastSnap}') 
     __volume = re.split('/', disk)[0] + '/' + re.split('/', disk)[1]
     __args = 'rbd:' + disk + '@' + lastSnap['name'] + ' ' + __volume
     __newSnap = {}
-    print(__args)
+    logging.info(__args)
     uid = benjiCheckSnapshot(disk, lastSnap, __volume)
     if uid:
         # when vmid was not seen before take a snap
         if not vmid in vmList:
-            print('proceed with differential backup of', uid)
+            logging.info('Found valid backup {uid}. Going on with differential backup')
             __newSnap = takeSnapshot(node, vmid)
             vmList.append(vmid)
         else: 
@@ -123,7 +188,7 @@ def benjiBackup(disk, lastSnap, vmid):
             __newSnap = __snapList[0]
         benjiDifferentialBackup(disk, lastSnap, __newSnap, uid)
     else: 
-        print('proceed with inital backup')
+        logging.info('proceed with inital backup')
         benjiInitialBackup(disk, lastSnap)
 
 def getNodeFromVMID(vmid):
@@ -141,13 +206,13 @@ def benjiDifferentialBackup(disk, lastSnap, newSnap, uid):
     __args = __pool + " " + __disk + " "  + lastSnap['name'] + " " + newSnap['name'] + " " + uid
     __cmd = __benji + " " + __args
     __pcmd = shlex.split(__cmd)
-    print('Executing shell command: ', __pcmd)
+    logging.info('Executing shell command: {__pcmd}')
     __out = subprocess.Popen(__pcmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     __stdout,__stderr = __out.communicate()
     __rc = __out.returncode
     if __rc != 0:
-        sys.exit("Differential benji backup failed with Errors", stderr)
-    print(f"Differential Backup of RBD Volume {disk}@{newSnap['name']} was successfull... Proceeding with next Volume")
+        sys.exit("Differential benji backup failed with Errors", __stderr)
+    logging.info(f"Differential Backup of RBD Volume {disk}@{newSnap['name']} was successfull... Proceeding with next Volume")
 
 # create Benji initial backup
 def benjiInitialBackup(disk, lastSnap):
@@ -157,13 +222,13 @@ def benjiInitialBackup(disk, lastSnap):
     __args = __pool + " " + __disk + " "  + lastSnap['name']
     __cmd = __benji + " " + __args
     __pcmd = shlex.split(__cmd)
-    print('Executing shell command: ', __pcmd)
+    logging.info('Executing shell command: {__pcmd}')
     __out = subprocess.Popen(__pcmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     __stdout,__stderr = __out.communicate()
     __rc = __out.returncode
     if __rc != 0:
-        sys.exit("Initial benji backup failed with Errors", stderr)
-    print(f"Initial Backup of RBD Volume {disk}@{lastSnap['name']} was successfull... Proceeding with next Volume")
+        sys.exit("Initial benji backup failed with Errors", __stderr)
+    logging.info(f"Initial Backup of RBD Volume {disk}@{lastSnap['name']} was successfull... Proceeding with next Volume")
     
 # checks if a given snapshot is valid for benji differential backup and returns a uid if successful
 def benjiCheckSnapshot(disk, lastSnap, volume):
@@ -173,28 +238,28 @@ def benjiCheckSnapshot(disk, lastSnap, volume):
     __cmd = __benji + ' ' + __args
     __pcmd = shlex.split(__cmd)
     out = subprocess.Popen(__pcmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    stdout,stderr = out.communicate()
-    __res = json.loads(stdout)
-#    print(__res)
+    __stdout,__stderr = out.communicate()
+    __res = json.loads(__stdout)
+#    logging.info(__res)
     if len(__res['versions']) > 0:
         if __res['versions'][0]['status'] == 'valid':
             return __res['versions'][0]['uid']  
 # takes vmid as argument, cleans up snapshots and remains last snapshot which is returned as object
 def cleanSnapshots(vmid):
-     print(f'Starting cleanup routine for snapshots of VMID: {vmid}')
+     logging.info(f'Starting cleanup routine for snapshots of VMID: {vmid}')
      __node = getNodeFromVMID(vmid)
      # Fetch, Clean and Take Snapshots of VMs - after that one snapshot should exist
-     print('Fetching Snapshots of: ', vmid)
+     logging.info('Fetching Snapshots of: {vmid}')
      __snapshots = getSnapList(__node, vmid)
      # Check if more than one pve snapshots are available, if so delete all but the newest one !!! this is not perfect - in the future we maybe check the list of snapshots against the list of benji snapshot names
      if len(__snapshots) > 1:
-         print('More than one snapshot found! - Starting the cleanup')
+         logging.info('More than one snapshot found! - Starting the cleanup')
          # sort list of snashot dicts by timestamp - newest snapshot is index 0
          __snapshots.sort(key = lambda i: i['snaptime'], reverse=True)
          # save newest snapshot in __lastsnap and remove it from __snapshots
          __takeSnapshot = True
          __snapAge = int(time.time()) - int(__snapshots[0]['snaptime']) 
-         if not __snapAge > snapMaxAge:
+         if not __snapAge > conf['snapMaxAge']:
              __lastSnap = __snapshots.pop(0)
              __takeSnapshot = False
          # delete unnecessary snapshots
@@ -206,11 +271,11 @@ def cleanSnapshots(vmid):
      elif len(__snapshots) == 1:
          __takeSnapshot = True
          __snapAge = int(time.time()) - int(__snapshots[0]['snaptime']) 
-         if not __snapAge > snapMaxAge:
+         if not __snapAge > conf['snapMaxAge']:
              __lastSnap = __snapshots[0]
              __takeSnapshot = False
          if __takeSnapshot:
-             print('Snapshot too old - deleting and taking a new one')
+             logging.info('Snapshot too old - deleting and taking a new one')
              deleteSnapshot(__node, vmid, __snapshots[0])
              __lastSnap = takeSnapshot(node, vmid)
      # no snapshot existing - take a new one and continue
@@ -218,11 +283,11 @@ def cleanSnapshots(vmid):
          # take snapshot and save name to __lastSnap
          __lastSnap = takeSnapshot(node, vmid)
      else: 
-         print('Panic - unforseen condition')
+         logging.info('Panic - unforseen condition')
 
      return __lastSnap
 
-# Work is done here 
+# Work is done here
 # generate List of Nodes
 nodeList = getNodeList()
 
@@ -233,7 +298,7 @@ for node in nodeList:
 # when there are vmids to backup then start the backup Logic
 for node in toBackupDict:
     if len(toBackupDict[node]) > 0:
-        print('Processing VMs of ', node)
+        logging.info('Processing VMs of {node}')
         for vmid in toBackupDict[node]:
             __snapDisks = []
             __disksProcessed = int(0)
@@ -241,28 +306,28 @@ for node in toBackupDict:
             __lastSnap = cleanSnapshots(vmid)
             # Create List of disks for backup --> __snapDisks
             if __lastSnap:
-                print('Processing backup for', __lastSnap)
+                logging.info('Processing backup for {__lastSnap}')
                 __snapConf = getSnapConfig(node, vmid, __lastSnap['name'])
                 for key,value in __snapConf.items():
-                    if re.match('scsi\d',key):
+                    if re.match(r'scsi\d',key):
                         if not re.search('size=4G',value) and not re.search('size=8G',value):
                             __snapDisks.append(re.sub(':','/',(re.split(',',value)[0])))
-                print('Running backup for disks:', __snapDisks)
+                logging.info('Running backup for disks: {__snapDisks}')
             # benji backup 
             if len(__snapDisks) > 0:
                 for disk in __snapDisks:
                     if re.match('HDD/', disk) or re.match('SSD/',disk):
-                        print('Starting Benji Backup for VMID {} disk {}'.format(vmid, disk))
+                        logging.info('Starting Benji Backup for VMID {} disk {}'.format(vmid, disk))
                         benjiBackup(disk, __lastSnap, vmid)
                         __disksProcessed += 1
             # run cleanup a second time after backup so that always just one benji snapshots remains
             if __disksProcessed > 0: 
-                print(f'Benji has backed up {__disksProcessed} disks of VM {vmid}. Now we clean up unnecessary snapshots')
+                logging.info(f'Benji has backed up {__disksProcessed} disks of VM {vmid}. Now we clean up unnecessary snapshots')
                 __remainingSnap = cleanSnapshots(vmid)
-        print('Backup Completed. See list of backed up VMs below')
-        print(toBackupDict)
+        logging.info('Backup Completed. See list of backed up VMs below')
+        logging.info(toBackupDict)
 
     else: 
-        print ('No VMs to backup for node:', node)
+        logging.info ('No VMs to backup for node: {node}')
 
 
