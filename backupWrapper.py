@@ -167,7 +167,7 @@ def deleteSnapshot(node, vmid, snapshot):
 
 # Benji Backup Logic - takes rbd disk (e.g. HDD/vm-104-disk-0) and vmid and creates benji backup
 def benjiBackup(disk, lastSnap, vmid):
-    logging.info('Invoking Benji Backup for disk {disk} - snapshot {lastSnap}') 
+    logging.info(f'Invoking Benji Backup for disk {disk} - snapshot {lastSnap}') 
     __volume = re.split('/', disk)[0] + '/' + re.split('/', disk)[1]
     __args = 'rbd:' + disk + '@' + lastSnap['name'] + ' ' + __volume
     __newSnap = {}
@@ -176,7 +176,7 @@ def benjiBackup(disk, lastSnap, vmid):
     if uid:
         # when vmid was not seen before take a snap
         if not vmid in vmList:
-            logging.info('Found valid backup {uid}. Going on with differential backup')
+            logging.info(f'Found valid backup {uid}. Going on with differential backup')
             __newSnap = takeSnapshot(node, vmid)
             vmList.append(vmid)
         else: 
@@ -205,7 +205,7 @@ def benjiDifferentialBackup(disk, lastSnap, newSnap, uid):
     __args = __pool + " " + __disk + " "  + lastSnap['name'] + " " + newSnap['name'] + " " + uid
     __cmd = __benji + " " + __args
     __pcmd = shlex.split(__cmd)
-    logging.info('Executing shell command: {__pcmd}')
+    logging.info(f'Executing shell command: {__pcmd}')
     __out = subprocess.Popen(__pcmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     __stdout,__stderr = __out.communicate()
     __rc = __out.returncode
@@ -221,7 +221,7 @@ def benjiInitialBackup(disk, lastSnap):
     __args = __pool + " " + __disk + " "  + lastSnap['name']
     __cmd = __benji + " " + __args
     __pcmd = shlex.split(__cmd)
-    logging.info('Executing shell command: {__pcmd}')
+    logging.info(f'Executing shell command: {__pcmd}')
     __out = subprocess.Popen(__pcmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     __stdout,__stderr = __out.communicate()
     __rc = __out.returncode
@@ -248,7 +248,7 @@ def cleanSnapshots(vmid):
      logging.info(f'Starting cleanup routine for snapshots of VMID: {vmid}')
      __node = getNodeFromVMID(vmid)
      # Fetch, Clean and Take Snapshots of VMs - after that one snapshot should exist
-     logging.info('Fetching Snapshots of: {vmid}')
+     logging.info(f'Fetching Snapshots of: {vmid}')
      __snapshots = getSnapList(__node, vmid)
      # Check if more than one pve snapshots are available, if so delete all but the newest one !!! this is not perfect - in the future we maybe check the list of snapshots against the list of benji snapshot names
      if len(__snapshots) > 1:
@@ -297,7 +297,7 @@ for node in nodeList:
 # when there are vmids to backup then start the backup Logic
 for node in toBackupDict:
     if len(toBackupDict[node]) > 0:
-        logging.info('Processing VMs of {node}')
+        logging.info(f'Processing VMs of {node}')
         for vmid in toBackupDict[node]:
             __snapDisks = []
             __disksProcessed = int(0)
@@ -305,18 +305,18 @@ for node in toBackupDict:
             __lastSnap = cleanSnapshots(vmid)
             # Create List of disks for backup --> __snapDisks
             if __lastSnap:
-                logging.info('Processing backup for {__lastSnap}')
+                logging.info(f'Processing backup for {__lastSnap}')
                 __snapConf = getSnapConfig(node, vmid, __lastSnap['name'])
                 for key,value in __snapConf.items():
                     if re.match(r'scsi\d',key):
                         if not re.search('size=4G',value) and not re.search('size=8G',value):
                             __snapDisks.append(re.sub(':','/',(re.split(',',value)[0])))
-                logging.info('Running backup for disks: {__snapDisks}')
+                logging.info(f'Running backup for disks: {__snapDisks}')
             # benji backup 
             if len(__snapDisks) > 0:
                 for disk in __snapDisks:
                     if re.match('HDD/', disk) or re.match('SSD/',disk):
-                        logging.info('Starting Benji Backup for VMID {} disk {}'.format(vmid, disk))
+                        logging.info(f'Starting Benji Backup for VMID {vmid} disk {disk}')
                         benjiBackup(disk, __lastSnap, vmid)
                         __disksProcessed += 1
             # run cleanup a second time after backup so that always just one benji snapshots remains
@@ -327,6 +327,6 @@ for node in toBackupDict:
         logging.info(toBackupDict)
 
     else: 
-        logging.info ('No VMs to backup for node: {node}')
+        logging.info (f'No VMs to backup for node: {node}')
 
 
