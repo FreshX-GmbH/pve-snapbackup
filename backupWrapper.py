@@ -5,7 +5,7 @@ import subprocess
 import shlex
 import json
 from datetime import datetime
-import logging
+import logging, coloredlogs
 import yaml
 import sys
 import os
@@ -13,7 +13,7 @@ import os
 # Config File definition
 configFile = 'settings.yml'
 # default log format + level
-logging.basicConfig(format='%(asctime)s - %(filename)s - %(levelname)s - %(message)s', level=logging.DEBUG)
+coloredlogs.install(fmt='%(asctime)s [%(filename)s] %(levelname)s %(message)s', level=logging.DEBUG)
 logging.info('Starting script execution')
 
 # read config file or die!
@@ -72,6 +72,7 @@ if conf['logLevel'] != 'None':
     logging.debug(f'Setting log level to {conf["logLevel"]}')
     logging.getLogger().setLevel(__logLevel)
 logging.debug(conf)
+sys.exit()
 
 # Global dict with nodes and vmids
 toBackupDict = {}
