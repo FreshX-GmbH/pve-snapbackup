@@ -56,7 +56,7 @@ def buildConf(cfg):
         'nodeFilter': str(cfg.get('nodeFilter', defaults['nodeFilter'])),
         'vmFilter': str(cfg.get('vmFilter', defaults['vmFilter'])),
         'snapRegex': str(cfg.get('snapRegex', defaults['snapRegex'])),
-        'snapMaxAge': str(cfg.get('snapMaxAge', defaults['snapMaxAge'])),
+        'snapMaxAge': int(cfg.get('snapMaxAge', defaults['snapMaxAge'])),
         'logFile': str(cfg.get('logFile', defaults['logFile'])),
         'logLevel': str(cfg.get('logLevel'))
 
