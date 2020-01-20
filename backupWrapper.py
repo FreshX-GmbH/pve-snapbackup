@@ -201,7 +201,7 @@ def getNodeFromVMID(vmid):
 def benjiDifferentialBackup(disk, lastSnap, newSnap, uid):
     __pool = re.split('/',disk)[0]
     __disk = re.split('/',disk)[1]
-    __benji = '/data/backup/scripts/benji_differential_backup.sh'
+    __benji = './benji_differential_backup.sh'
     __args = __pool + " " + __disk + " "  + lastSnap['name'] + " " + newSnap['name'] + " " + uid
     __cmd = __benji + " " + __args
     __pcmd = shlex.split(__cmd)
@@ -217,7 +217,7 @@ def benjiDifferentialBackup(disk, lastSnap, newSnap, uid):
 def benjiInitialBackup(disk, lastSnap):
     __pool = re.split('/',disk)[0]
     __disk = re.split('/',disk)[1]
-    __benji = '/data/backup/scripts/benji_initial_backup.sh'
+    __benji = './benji_initial_backup.sh'
     __args = __pool + " " + __disk + " "  + lastSnap['name']
     __cmd = __benji + " " + __args
     __pcmd = shlex.split(__cmd)
