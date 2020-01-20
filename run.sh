@@ -13,11 +13,11 @@ find $LOGDIR -type f -name 'pvesnapbackup_*' -mtime +14 -exec rm {} \;
 DATE=$(date +"%Y-%m-%d_%H-%M-%S")
 LOGFILE=/var/log/pvesnapbackup/pvesnapbackup_$DATE.log
 logger "$0 Sending logs to $LOGFILE"
-echo "Starting backup expiration" |& tee -a $LOGFILE
-benji enforce latest3,days7,weeks4,months12 |& tee -a $LOGFILE
+echo "Starting backup expiration" | tee -a $LOGFILE
+benji enforce latest3,days7,weeks4,months12 | tee -a $LOGFILE
 cd /data/backup/pvesnapbackup && python -u backupWrapper.py |& tee -a $LOGFILE
 echo "Starting deep scrubbing of 14 % of all images" |& tee -a $LOGFILE
-benji batch-deep-scrub --version-percentage 14 |& tee -a $LOGFILE 
+benji batch-deep-scrub --version-percentage 14 | tee -a $LOGFILE 
 INVALID=$(benji -m --log-level ERROR ls | jq -r '.versions[] | select(.status|test("invalid"))| .uid, .status' | wc -l)
 if [ $INVALID -ne 0 ]; then 
     echo "One or more backups are invalid! Manual intervention needed!" |& tee -a $LOGFILE
