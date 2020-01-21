@@ -32,7 +32,7 @@ NOW=$(date +%s)
 LASTSCRUB=$(( $NOW-$MTIME ))
 if [ $LASTSCRUB -gt $SCRUB_MAXAGE ]; then
     echo "Starting deep scrubbing of 14 % of all images" |& tee -a $LOGFILE
-    benji batch-deep-scrub --version-percentage 14 | tee -a $LOGFILE 
+    benji batch-deep-scrub --version-percentage 14 | tee -a $LOGFILE && touch $TMPFILE
     INVALID=$(benji -m --log-level ERROR ls | jq -r '.versions[] | select(.status|test("invalid"))| .uid, .status' | wc -l)
     if [ $INVALID -ne 0 ]; then 
         echo "One or more backups are invalid! Manual intervention needed!" |& tee -a $LOGFILE
