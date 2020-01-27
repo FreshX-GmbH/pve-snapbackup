@@ -18,7 +18,7 @@ DATE=$(date +"%Y-%m-%d_%H-%M-%S")
 LOGFILE=/var/log/pvesnapbackup/pvesnapbackup_$DATE.log
 logger "$0 Sending logs to $LOGFILE"
 echo "Checking for locks in benji Database" | tee -a $LOGFILE
-if [ "$(echo "select * from locks;" | sqlite3 benji.sqlite)" != "" ]; then
+if [ "$(echo "select * from locks;" | sqlite3 $SQLITE)" != "" ]; then
     echo "backing up database before modifying it" | tee -a $LOGFILE
     cp -v $SQLITE $SQLITE.bak_$(date +%s) |& tee -a $LOGFILE
     TRY=1
