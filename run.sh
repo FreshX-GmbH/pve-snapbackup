@@ -9,7 +9,8 @@ TMPDIR=/tmp/benji
 TMPFILE=${TMPDIR}/deep_scrub
 SCRUB_MAXAGE=86400
 LOGDIR="/var/log/pvesnapbackup"
-SQLITE="/data/backup/benji/db/benji.sqlite"
+SQLITE_DB="/data/backup/benji/db/benji.sqlite"
+SQLITE_BIN="/usr/bin/sqlite3"
 logger "$0 Setting up log directory $LOGDIR"
 mkdir -p $LOGDIR
 logger "$0 Cleanup old logs in $LOGDIR"
@@ -18,15 +19,14 @@ DATE=$(date +"%Y-%m-%d_%H-%M-%S")
 LOGFILE=/var/log/pvesnapbackup/pvesnapbackup_$DATE.log
 logger "$0 Sending logs to $LOGFILE"
 echo "Checking for locks in benji Database" | tee -a $LOGFILE
-if [ "$(echo "select * from locks;" | sqlite3 $SQLITE)" != "" ]; then
+if [ "$(echo "select * from locks;" | $SQLITE_BIN $SQLITE_DB)" != "" ]; then
     echo "backing up database before modifying it" | tee -a $LOGFILE
-    cp -v $SQLITE $SQLITE.bak_$(date +%s) |& tee -a $LOGFILE
+    cp -v $SQLITE_DB $SQLITE_DB.bak_$(date +%s) |& tee -a $LOGFILE
     TRY=1
-    while [ "$(echo "select * from locks;" | sqlite3 $SQLITE)" != "" ]; do
+    while [ "$(echo "select * from locks;" | $SQLITE_BIN $SQLITE_DB)" != "" ]; do
         echo "trying to delete locks from database" | tee -a $LOGFILE
-        echo "back up database before modifying it..." | tee -a $LOGFILE
-        echo "DELETE FROM locks WHERE reason = 'NBD';" | sqlite3 $SQLITE |& tee -a $LOGFILE
-        TRY=((TRY+1))
+        echo "DELETE FROM locks WHERE reason = 'NBD';" | $SQLITE_BIN $SQLITE_DB |& tee -a $LOGFILE
+        TRY=((TRY++))
         if [ "$TRY" -gt 5 ]; then
             echo "Failed to unlock database.. giving up" | tee -a $LOGFILE 
             exit 1
