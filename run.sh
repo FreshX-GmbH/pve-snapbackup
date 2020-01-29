@@ -11,6 +11,7 @@ SCRUB_MAXAGE=86400
 LOGDIR="/var/log/pvesnapbackup"
 SQLITE_DB="/data/backup/benji/db/benji.sqlite"
 SQLITE_BIN="/usr/bin/sqlite3"
+BENJI_RETENTION="latest3,days7,weeks4,months12"
 logger "$0 Setting up log directory $LOGDIR"
 mkdir -p $LOGDIR
 logger "$0 Cleanup old logs in $LOGDIR"
@@ -34,7 +35,7 @@ if [ "$(echo 'select * from locks;' | $SQLITE_BIN $SQLITE_DB)" != "" ]; then
     done
 fi
 echo "Starting backup expiration" | tee -a $LOGFILE
-benji enforce latest3,days7,weeks4,months12 | tee -a $LOGFILE
+benji enforce ${BENJI_RETENTION} | tee -a $LOGFILE
 cd /data/backup/pvesnapbackup && python -u backupWrapper.py |& tee -a $LOGFILE
 # Start deep scrubbing if it did not run for more than 24 hours
 if [ ! -d /tmp/benji ]; then
