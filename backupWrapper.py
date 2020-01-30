@@ -141,7 +141,8 @@ def takeSnapshot(node, vmid):
                         if __snapshots[0]['name'] == __snapName:
                             __snap = __snapshots[0]
                         else:
-                            sys.exit("Something went wrong while creating a new snapshot")
+                            logging.error(f'Snapshot for VMID {vmid} failed. Aborting...')
+                            sys.exit(1)
                         logging.info(f'snapshot done: {__snap}')
                         return __snap
 
@@ -210,7 +211,8 @@ def benjiDifferentialBackup(disk, lastSnap, newSnap, uid):
     __stdout,__stderr = __out.communicate()
     __rc = __out.returncode
     if __rc != 0:
-        sys.exit("Differential benji backup failed with Errors", __stderr)
+        logging.error(f'Differential benji backup failed with Errors: {__stderr}')
+        sys.exit(__rc)
     logging.info(f"Differential Backup of RBD Volume {disk}@{newSnap['name']} was successfull... Proceeding with next Volume")
 
 # create Benji initial backup
@@ -226,7 +228,8 @@ def benjiInitialBackup(disk, lastSnap):
     __stdout,__stderr = __out.communicate()
     __rc = __out.returncode
     if __rc != 0:
-        sys.exit("Initial benji backup failed with Errors", __stderr)
+        logging.error(f'Initial benji backup failed with Errors: {__stderr}')
+        sys.exit(__rc)
     logging.info(f"Initial Backup of RBD Volume {disk}@{lastSnap['name']} was successfull... Proceeding with next Volume")
     
 # checks if a given snapshot is valid for benji differential backup and returns a uid if successful
@@ -323,10 +326,10 @@ for node in toBackupDict:
             if __disksProcessed > 0: 
                 logging.info(f'Benji has backed up {__disksProcessed} disks of VM {vmid}. Now we clean up unnecessary snapshots')
                 __remainingSnap = cleanSnapshots(vmid)
-        logging.info('Backup Completed. See list of backed up VMs below')
-        logging.info(toBackupDict)
-
     else: 
         logging.info (f'No VMs to backup for node: {node}')
+    
+    logging.info('Backup Completed. See list of backed up VMs below')
+    logging.info(toBackupDict)
 
 
