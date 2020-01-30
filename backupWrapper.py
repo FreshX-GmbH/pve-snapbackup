@@ -135,7 +135,7 @@ def takeSnapshot(node, vmid):
         if len(__snapshots) > 0:
             for element in __snapshots:
                 if element['name'] == __snapName:
-                    if not 'snapstate' in __snapshots[0]:
+                    if 'snapstate' not in __snapshots[0]:
                         __exists = True
                         __snapshots.sort(key = lambda i: i['snaptime'], reverse=True)
                         if __snapshots[0]['name'] == __snapName:
@@ -176,7 +176,7 @@ def benjiBackup(disk, lastSnap, vmid):
     uid = benjiCheckSnapshot(disk, lastSnap, __volume)
     if uid:
         # when vmid was not seen before take a snap
-        if not vmid in vmList:
+        if vmid not in vmList:
             logging.info(f'Found valid backup {uid}. Going on with differential backup')
             __newSnap = takeSnapshot(node, vmid)
             vmList.append(vmid)
