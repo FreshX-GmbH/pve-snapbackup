@@ -130,7 +130,7 @@ def takeSnapshot(node, vmid):
             logging.info('Snapshot hanging... Aborting backup!')
             break
         logging.info('Waiting for new Snapshot to be completed...')
-        time.sleep(5)
+        time.sleep(10)
         __snapshots = getSnapList(node, vmid)
         if len(__snapshots) > 0:
             for element in __snapshots:
