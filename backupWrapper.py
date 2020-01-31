@@ -135,7 +135,7 @@ def takeSnapshot(node, vmid):
         if len(__snapshots) > 0:
             for element in __snapshots:
                 if element['name'] == __snapName:
-                    if 'snapstate' not in __snapshots[0]:
+                    if 'snapstate' not in element:
                         __exists = True
                         __snapshots.sort(key = lambda i: i['snaptime'], reverse=True)
                         if __snapshots[0]['name'] == __snapName:
