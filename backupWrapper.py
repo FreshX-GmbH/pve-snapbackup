@@ -329,7 +329,7 @@ for node in toBackupDict:
     else: 
         logging.info (f'No VMs to backup for node: {node}')
     
-    logging.info('Backup Completed. See list of backed up VMs below')
-    logging.info(toBackupDict)
+logging.info('Backup Completed. See list of backed up VMs below')
+logging.info(toBackupDict)
 
 
