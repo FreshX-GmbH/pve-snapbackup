@@ -312,7 +312,8 @@ for node in toBackupDict:
                 __snapConf = getSnapConfig(node, vmid, __lastSnap['name'])
                 for key,value in __snapConf.items():
                     if re.match(r'scsi\d',key):
-                        if not re.search('size=4G',value) and not re.search('size=8G',value):
+                        __diskSize = [int(num) for num in re.findall(r'\d+', value)][0]
+                        if __diskSize >= 16:
                             __snapDisks.append(re.sub(':','/',(re.split(',',value)[0])))
                 logging.info(f'Running backup for disks: {__snapDisks}')
             # benji backup 
