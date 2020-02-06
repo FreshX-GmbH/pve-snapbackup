@@ -321,6 +321,7 @@ for node in toBackupDict:
             # benji backup 
             if len(__snapDisks) > 0:
                 for disk in __snapDisks:
+                    # TODO: make pools user configurable
                     if re.match('HDD/', disk) or re.match('SSD/',disk):
                         logging.info(f'Starting Benji Backup for VMID {vmid} disk {disk}')
                         benjiBackup(disk, __lastSnap, vmid)
