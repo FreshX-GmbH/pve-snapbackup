@@ -315,7 +315,9 @@ for node in toBackupDict:
                 __snapConf = getSnapConfig(node, vmid, __lastSnap['name'])
                 for key,value in __snapConf.items():
                     if re.match(r'scsi\d',key):
-                        if re.search('backup=0',value[0]) == None:
+                        if re.search('backup=0',value):
+                            logging.info(f'Skipping backup for disk {key} of VM {vmid}, because backup=0 is set.')
+                        else:
                             __snapDisks.append(re.sub(':','/',(re.split(',',value)[0])))
                 logging.info(f'Running backup for disks: {__snapDisks}')
             # benji backup 
