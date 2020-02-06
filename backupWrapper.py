@@ -34,7 +34,7 @@ with open(configFile, 'r') as ymlfile:
 # global stuff - populate config dict or die!
 defaults = {
     'nodeFilter': 'compute', # Filter String for pve hostnames to search for vms to backup
-    'vmFilter': 'benjiBackup=true', # Filter String to search for in VM description to decide if we back up the vm
+    'vmFilter': 'true', # Filter String to search for in VM description to decide if we back up the vm
     'snapRegex': '^b_', # Snapshot prefix to use - so we do not interfere with other snapshots
     'snapMaxAge': int(172800), # 48h
     'logFile': '/var/log/pvesnapbackup', # this is not yet implemented
@@ -77,7 +77,7 @@ logging.debug(conf)
 toBackupDict = {}
 # Track VM Snapshots to prevent unnecessary snapshots
 vmList = []
-# Proxmox API Object
+# Proxmox API Object --> is declared again in main loop because of timeout issues
 proxmox = ProxmoxAPI(conf['pveApiEndpoint'], user=conf['pveApiUser'], password=conf['pveApiPwd'], verify_ssl=conf['pveVerifySsl'])
 
 # returns a list of proxmox nodes matching the filterString  
@@ -299,6 +299,9 @@ for node in nodeList:
 
 # when there are vmids to backup then start the backup Logic
 for node in toBackupDict:
+    # refresh Api access token - timeout is two hours
+    # TODO: get timeout handled gracefully 
+    proxmox = ProxmoxAPI(conf['pveApiEndpoint'], user=conf['pveApiUser'], password=conf['pveApiPwd'], verify_ssl=conf['pveVerifySsl'])
     if len(toBackupDict[node]) > 0:
         logging.info(f'Processing VMs of {node}')
         for vmid in toBackupDict[node]:
@@ -312,12 +315,15 @@ for node in toBackupDict:
                 __snapConf = getSnapConfig(node, vmid, __lastSnap['name'])
                 for key,value in __snapConf.items():
                     if re.match(r'scsi\d',key):
-                        if not re.search('size=4G',value) and not re.search('size=8G',value):
+                        if re.search('backup=0',value):
+                            logging.info(f'Skipping backup for disk {key} of VM {vmid}, because backup=0 is set.')
+                        else:
                             __snapDisks.append(re.sub(':','/',(re.split(',',value)[0])))
                 logging.info(f'Running backup for disks: {__snapDisks}')
             # benji backup 
             if len(__snapDisks) > 0:
                 for disk in __snapDisks:
+                    # TODO: make pools user configurable
                     if re.match('HDD/', disk) or re.match('SSD/',disk):
                         logging.info(f'Starting Benji Backup for VMID {vmid} disk {disk}')
                         benjiBackup(disk, __lastSnap, vmid)
@@ -329,7 +335,7 @@ for node in toBackupDict:
     else: 
         logging.info (f'No VMs to backup for node: {node}')
     
-    logging.info('Backup Completed. See list of backed up VMs below')
-    logging.info(toBackupDict)
+logging.info('Backup Completed. See list of backed up VMs below')
+logging.info(toBackupDict)
 
 
