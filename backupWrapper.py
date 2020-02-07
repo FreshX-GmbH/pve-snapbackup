@@ -315,8 +315,10 @@ for node in toBackupDict:
                 __snapConf = getSnapConfig(node, vmid, __lastSnap['name'])
                 for key,value in __snapConf.items():
                     if re.match(r'scsi\d',key):
-                        if re.search('backup=0',value):
+                        __diskConf = proxmox.nodes(node).qemu(vmid).config.get()
+                        if 'backup=0' in __diskConf[key]:
                             logging.info(f'Skipping backup for disk {key} of VM {vmid}, because backup=0 is set.')
+                            logging.debug(f'{__diskConf[key]}')
                         else:
                             __snapDisks.append(re.sub(':','/',(re.split(',',value)[0])))
                 logging.info(f'Running backup for disks: {__snapDisks}')
