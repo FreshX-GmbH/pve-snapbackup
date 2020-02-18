@@ -1,3 +1,2 @@
 # pveSnapBackup
-
-Create Qemu Snapshot based backups of your PVE virtual machines 
+## Wrapper script to make snapshot based benji2 backups of your PVE based virtual machines
