@@ -8,9 +8,9 @@ vmFilter: 'benjiBackup=true'
 snapRegex: '^b_'
 # Maximum age for a snapshot used for a differential backup in seconds - 48h = 172800s
 snapMaxAge: 172800
-# default log file (please set up a logrotation)
-logFile: 'pvesnapbackup.log'
+# loglevel 
 logLevel: 'debug'
+# PVE API
 pve: 
   apiEndpoint: 'pve-compute01'
   apiUser: 'backup@pve'
