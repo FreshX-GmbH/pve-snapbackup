@@ -9,7 +9,7 @@ For features like differential backups and data deduplication and/or encryption,
 
 Contributions are welcome!
 
-### Why should I use pveSnapBackup
+### Why should I use pveSnapBackup?
 
 - Your virtualization hosts are running Proxmox VE
 - Your storage Backend is Ceph based
