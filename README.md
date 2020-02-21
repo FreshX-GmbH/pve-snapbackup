@@ -40,7 +40,7 @@ git clone https://github.com/networkhell/pve-snapbackup
 cd pve-snapbackup
 cp settings.yml-template settings.yml
 ```
-Edit settings to your needs.
+Modify settings as needed
 ```
 ---
 # change defaults to your needs
@@ -61,7 +61,7 @@ pve:
   verifySsl: false
 ```
 
-### Operations
+### Operation
 
 pveSnapbackup will take snapshots prefixed with **b_** for backup and will always keep the latest snapshot. This is necessary for taking differential backups.
 
@@ -75,6 +75,8 @@ acl:1:/vms:backup@pve:PVEVMAdmin:
 
 #### Set up VMs for backup
 Currently the script is looking for a String in the VM description field of Proxmox VE. The default is 'benjiBackup=true'. 
+![description](https://github.com/networkhell/pvesnapbackup/raw/contrib/screenshots/vmdesc.png "")
+
 
 #### Exclude single disks from backup
 You can use the PVE Web GUI to set **backup=0** on single disks of a VM. These disks will be excluded from backup.
