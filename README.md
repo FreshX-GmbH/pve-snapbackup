@@ -75,7 +75,7 @@ acl:1:/vms:backup@pve:PVEVMAdmin:
 
 #### Set up VMs for backup
 Currently the script is looking for a String in the VM description field of Proxmox VE. The default is 'benjiBackup=true'. 
-![description](https://github.com/networkhell/pvesnapbackup/raw/master/contrib/screenshots/vmdesc.png "")
+![description](https://github.com/networkhell/pve-snapbackup/raw/masteg/contrib/screenshots/vmdesc.png "")
 
 
 #### Exclude single disks from backup
