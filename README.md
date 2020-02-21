@@ -93,4 +93,3 @@ E.g. via cronjob
 ```
 0 3 * * * root /data/backup/pvesnapbackup/run.sh > /dev/null 2>&1
 ```
-

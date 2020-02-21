@@ -7,7 +7,7 @@ trap 'cleanup' SIGINT ERR
 source /usr/local/benji/bin/activate
 # virtualenv is now active.
 #
-RECEIPIENTS="florian@freshx.de,kai@freshx.de"
+RECEIPIENTS="your@email.com"
 TMPDIR=/tmp/benji
 TMPFILE=${TMPDIR}/deep_scrub
 SCRUB_MAXAGE=86400
