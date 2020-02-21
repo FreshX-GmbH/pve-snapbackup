@@ -2,3 +2,4 @@ settings.json
 .vscode
 node_modules
 .gitlab
+.gitlab-ci.yml
