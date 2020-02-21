@@ -9,9 +9,9 @@ For features like differential backups and data deduplication and/or encryption,
 
 Contributions are welcome!
 
-### Is pveSnapBackup the tool of choice for me?
+### Why should I use pveSnapBackup
 
-- Your virtualization hosts are running Proxmox VE? 
+- Your virtualization hosts are running Proxmox VE
 - Your storage Backend is Ceph based
 - You want to combine the Ceph features like differential snapshots with the convenience of PVEs KVM snapshotting mechanism and the power of benji Backup. 
 
