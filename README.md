@@ -67,9 +67,6 @@ If you add a new disk to a VM that is backed up by pveSnapBackup, you should rem
 Currently I use the run.sh Script to enforce Benji retention rules. 
 
 #### Restore
-A simple restore script focused on file based restore and Ceph based restore is currently WIP and will be published soon
-
-
-
+A simple restore script focused on file based restore and Ceph based restore is currently WIP and will be published soon. 
 
 
