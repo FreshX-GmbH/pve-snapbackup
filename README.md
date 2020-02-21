@@ -24,6 +24,17 @@ In general all Storage backends with native support for snapshots should be comp
 - Your backup server which will also run benji and pveSnapBackup should be a configured client of your Ceph cluster
 
 ### Installation 
+First [install benji](https://benji-backup.me/installation.html#common-to-all-distributions). Most likely you will want to do this in a python virtual environment. 
+
+Install dependencies: 
+
+```
+. /usr/local/benji/bin/activate
+pip install proxmoxer
+pip install pyaml
+pip install coloredlogs
+```
+
 ```
 git clone https://github.com/networkhell/pve-snapbackup
 cd pve-snapbackup
@@ -68,5 +79,12 @@ Currently I use the run.sh Script to enforce Benji retention rules.
 
 #### Restore
 A simple restore script focused on file based restore and Ceph based restore is currently WIP and will be published soon. 
+
+#### Scheduled backups
+E.g. via cronjob
+```
+0 3 * * * root /data/backup/pvesnapbackup/run.sh > /dev/null 2>&1
+```
+
 
 
