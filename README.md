@@ -7,6 +7,8 @@ Basically pveSnapBackup takes snapshots using the [promoxer](https://github.com/
 
 For features like differential backups and data deduplication and/or encryption, please see the [Benji documentation](https://benji-backup.me/quickstart.html)
 
+Contributions are welcome!
+
 ### Is pveSnapBackup the tool of choice for me?
 
 - Your virtualization hosts are running Proxmox VE? 
@@ -27,7 +29,7 @@ git clone https://github.com/networkhell/pve-snapbackup
 cd pve-snapbackup
 cp settings.yml-template settings.yml
 ```
-Edit settings to your needs
+Edit settings to your needs.
 ```
 ---
 # change defaults to your needs
@@ -47,3 +49,27 @@ pve:
   apiPwd: ''
   verifySsl: false
 ```
+
+### Operations
+
+pveSnapbackup will take snapshots prefixed with **b_** for backup and will always keep the latest snapshot. This is necessary for taking differential backups. 
+
+#### Set up VMs for backup
+Currently the script is looking for a String in the VM description field of Proxmox VE. The default is 'benjiBackup=true'. 
+
+#### Exclude single disks from backup
+You can use the PVE Web GUI to set 'backup=0' on single disks of a VM. These disks will be excluded from backup.
+
+#### Quirks
+If you add a new disk to a VM that is backed up by pveSnapBackup, you should remove the last snapshot to enforce a new initial backup of this VM. Otherwise subsequent differential backups will not work!
+
+#### Retention 
+Currently I use the run.sh Script to enforce Benji retention rules. 
+
+#### Restore
+A simple restore script focused on file based restore and Ceph based restore is currently WIP and will be published soon
+
+
+
+
+
