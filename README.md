@@ -94,5 +94,5 @@ A simple restore script focused on file based restore and Ceph based restore is 
 #### Scheduled backups
 E.g. via cronjob
 ```
-0 3 * * * root /data/backup/pvesnapbackup/run.sh > /dev/null 2>&1
+0 2 * * * root /data/backup/pvesnapbackup/run.sh > /dev/null 2>&1
 ```
