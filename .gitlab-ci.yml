@@ -10,6 +10,13 @@ test:nodeunit:
   script:
     - bash $(dirname $(nvm which current))/../lib/node_modules/wallaby-ci/buildscripts/${CI_JOB_NAME}.sh
 
+test:cargotest:
+  stage: test
+  tags:
+    - test
+  script:
+    - bash $(dirname $(nvm which current))/../lib/node_modules/wallaby-ci/buildscripts/${CI_JOB_NAME}.sh
+
 test:lint:
   stage: test
   script:
@@ -28,7 +35,7 @@ deploy:wallabycd:
     - if [ $(uname) == "Darwin" ]; then export FASTLANE_SESSION=$(cat /Users/freshx/appleDeveloperSession_cd@freshx.de.txt); fi
     - export ANDROID_HOME=/opt/android-sdk-linux
     - node $(dirname $(nvm which current))/../lib/node_modules/wallaby-cd/app.js
-    - node $(dirname $(nvm which current))/../bin/wallaby-simple-cd
+    - nvm use 12 && node $(dirname $(nvm which current))/../bin/wallaby-simple-cd
   tags: 
     - deploy
 

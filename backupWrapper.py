@@ -299,12 +299,12 @@ for node in nodeList:
 
 # when there are vmids to backup then start the backup Logic
 for node in toBackupDict:
-    # refresh Api access token - timeout is two hours
     # TODO: get timeout handled gracefully 
-    proxmox = ProxmoxAPI(conf['pveApiEndpoint'], user=conf['pveApiUser'], password=conf['pveApiPwd'], verify_ssl=conf['pveVerifySsl'])
     if len(toBackupDict[node]) > 0:
         logging.info(f'Processing VMs of {node}')
         for vmid in toBackupDict[node]:
+            # refresh Api access token - timeout is two hours
+            proxmox = ProxmoxAPI(conf['pveApiEndpoint'], user=conf['pveApiUser'], password=conf['pveApiPwd'], verify_ssl=conf['pveVerifySsl'])
             __snapDisks = []
             __disksProcessed = int(0)
             # Fetch, Clean and Take Snapshots of VMs - after that one snapshot should exist
