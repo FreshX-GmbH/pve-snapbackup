@@ -35,6 +35,7 @@ if [ "$(echo 'select * from locks;' | $SQLITE_BIN $SQLITE_DB)" != "" ]; then
     while [ "$(echo 'select * from locks;' | $SQLITE_BIN $SQLITE_DB)" != "" ]; do
 	    echo "$(date +'%Y-%m-%d %H:%M:%S') trying to delete locks from database" | tee -a $LOGFILE
         echo "DELETE FROM locks WHERE reason = 'NBD';" | $SQLITE_BIN $SQLITE_DB |& tee -a $LOGFILE
+	sleep 3
         ((TRY++))
         if [ "$TRY" -gt 5 ]; then
 		echo "$(date +'%Y-%m-%d %H:%M:%S') Failed to unlock database.. giving up" | tee -a $LOGFILE 

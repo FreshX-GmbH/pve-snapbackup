@@ -299,10 +299,10 @@ for node in nodeList:
 
 # when there are vmids to backup then start the backup Logic
 for node in toBackupDict:
-    # TODO: get timeout handled gracefully 
     if len(toBackupDict[node]) > 0:
         logging.info(f'Processing VMs of {node}')
         for vmid in toBackupDict[node]:
+            # TODO: get timeout handled gracefully 
             # refresh Api access token - timeout is two hours
             proxmox = ProxmoxAPI(conf['pveApiEndpoint'], user=conf['pveApiUser'], password=conf['pveApiPwd'], verify_ssl=conf['pveVerifySsl'])
             __snapDisks = []
@@ -328,8 +328,13 @@ for node in toBackupDict:
                     # TODO: make pools user configurable
                     if re.match('HDD/', disk) or re.match('SSD/',disk):
                         logging.info(f'Starting Benji Backup for VMID {vmid} disk {disk}')
+                        _elapsedTime = int(0)
+                        _startTime = int(time.time())
                         benjiBackup(disk, __lastSnap, vmid)
                         __disksProcessed += 1
+                        _elapsedTime = int(time.time()) - _startTime
+                        if _elapsedTime >= 3600:
+                            proxmox = ProxmoxAPI(conf['pveApiEndpoint'], user=conf['pveApiUser'], password=conf['pveApiPwd'], verify_ssl=conf['pveVerifySsl'])
             # run cleanup a second time after backup so that always just one benji snapshots remains
             if __disksProcessed > 0: 
                 logging.info(f'Benji has backed up {__disksProcessed} disks of VM {vmid}. Now we clean up unnecessary snapshots')
